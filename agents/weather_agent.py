@@ -3,25 +3,21 @@ import os
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from agents.base_agent import BaseAgent
-from agents.prompts.attraction_prompt import ATTRACTION_PROMPT
+from agents.prompts.weather_prompt import WEATHER_PROMPT
 from agents.service.agent_service import amap_client
 from models.schema import Request
 
 
-class AttractionAgent(BaseAgent):
+class WeatherAgent(BaseAgent):
 
     def __init__(self, model_name=None, api_key=None, base_url=None, stream=False):
         super().__init__(model_name, api_key, base_url, stream)
 
     def get_system_prompt(self) -> str:
-        return ATTRACTION_PROMPT
+        return WEATHER_PROMPT
 
     def get_user_prompt(self, request: Request):
-        user_prefer = ''
-        if request.attraction_prefer:
-            user_prefer = request.attraction_prefer
-
-        return f'使用amap工具搜索{request.end_city}的{user_prefer}景点'
+        return f'使用amap工具搜索{request.end_city}{request.start_date}至{request.end_date}的天气'
 
 
     async def build_tools(self):
@@ -30,8 +26,8 @@ class AttractionAgent(BaseAgent):
 
 if __name__ == '__main__':
     async def main():
-        agent = AttractionAgent(stream=True)
-        request = Request(start_city='南京', end_city='丽江', start_date='2026-06-22', end_date='2026-06-24', attraction_prefer=['公园'])
+        agent = WeatherAgent(stream=True)
+        request = Request(start_city='南京', end_city='丽江', start_date='2026-07-01', end_date='2026-07-03')
         async for content in agent.run(request):
             print(content, end='', flush=True)
 

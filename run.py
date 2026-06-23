@@ -1,16 +1,48 @@
-# 这是一个示例 Python 脚本。
+from typing import Any
 
-# 按 Shift+F10 执行或将其替换为您的代码。
-# 按 双击 Shift 在所有地方搜索类、文件、工具窗口、操作和设置。
+from agents.base_agent import BaseAgent
+from agents.hotel_agent import HotelAgent
+from agents.weather_agent import WeatherAgent
+from agents.attraction_agent import AttractionAgent
+from agents.planner_agent import PlannerAgent
+from models.schema import Request
+from utils.logger import log
 
 
-def print_hi(name):
-    # 在下面的代码行中使用断点来调试脚本。
-    print(f'Hi, {name}')  # 按 Ctrl+F8 切换断点。
-
-
-# 按装订区域中的绿色按钮以运行脚本。
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    import time
+    import asyncio
+    from agents.service.agent_service import agent_run
 
-# 访问 https://www.jetbrains.com/help/pycharm/ 获取 PyCharm 帮助
+
+    async def main():
+        a_agent = AttractionAgent(stream=True)
+        h_agent = HotelAgent(stream=True)
+        w_agent = WeatherAgent(stream=True)
+        p_agent = PlannerAgent(stream=True)
+        request = Request(start_city='南京', end_city='丽江', start_date='2026-06-22', end_date='2026-06-23')
+
+        attractions, hotels, weather = await asyncio.gather(
+            agent_run(a_agent, request),
+            agent_run(h_agent, request),
+            agent_run(w_agent, request)
+        )
+
+        log.info(f'景点信息：{attractions}')
+
+        log.info(f'酒店信息：{hotels}')
+
+        log.info(f'天气信息：{weather}')
+
+        req = {'request': request, 'attractions': attractions, 'hotels': hotels, 'weather': weather}
+        planner = await agent_run(p_agent, req)
+
+        log.info(f'旅程信息：{planner}')
+
+    before = time.time()
+
+    asyncio.run(main())
+
+    after = time.time()
+    duration = after - before
+    log.info(f'耗时：{duration}秒')
