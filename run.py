@@ -20,7 +20,7 @@ if __name__ == '__main__':
         h_agent = HotelAgent(stream=True)
         w_agent = WeatherAgent(stream=True)
         p_agent = PlannerAgent(stream=True)
-        request = Request(start_city='南京', end_city='丽江', start_date='2026-06-22', end_date='2026-06-23')
+        request = Request(start_city='南京', end_city='丽江', start_date='2026-06-24', end_date='2026-06-25')
 
         attractions, hotels, weather = await asyncio.gather(
             agent_run(a_agent, request),

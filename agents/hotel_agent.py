@@ -1,5 +1,7 @@
 import os
-from agents.service.agent_service import amap_client
+
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
 from agents.base_agent import BaseAgent
 from agents.prompts.hotel_prompt import HOTEL_PROMPT
 from models.schema import Request
@@ -23,7 +25,19 @@ class HotelAgent(BaseAgent):
 
     async def build_tools(self):
 
-        return await amap_client().get_tools()
+        amap_key = os.getenv('AMAP_API_KEY', None)
+        if not amap_key:
+            raise ValueError('env文件中未配置AMAP_API_KEY，请检查！')
+        mcp_info = {
+            'amap': {
+                'url': f'https://mcp.amap.com/sse?key={amap_key}',
+                'transport': 'sse',
+                'timeout': 20
+            }
+        }
+        mcp_client = MultiServerMCPClient(mcp_info)
+
+        return await mcp_client.get_tools()
 
 
 if __name__ == '__main__':
