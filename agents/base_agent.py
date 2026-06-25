@@ -35,9 +35,6 @@ class BaseAgent(ABC):
         if not self.tools:
             self.tools = await self.build_tools()
 
-            tool_names = [tool.name for tool in self.tools]
-            log.info(f'{self.__class__.__name__} Tools: {tool_names}')
-
         self.llm = ChatOpenAI(model=self.__model_name, api_key=self.__api_key, base_url=self.__base_url, streaming=self.stream)
 
         self.agent = create_agent(model=self.llm, tools=self.tools, system_prompt=self.system_prompt)

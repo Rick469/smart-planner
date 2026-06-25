@@ -4,6 +4,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from agents.base_agent import BaseAgent
 from agents.prompts.hotel_prompt import HOTEL_PROMPT
+from agents.service.mcp_service import limit_amap
 from models.schema import Request
 
 
@@ -20,7 +21,7 @@ class HotelAgent(BaseAgent):
         if request.hotel_prefer:
             user_prefer = request.hotel_prefer
 
-        return f'使用maps_text_search工具搜索{request.end_city}{request.start_date}至{request.end_date}可订的{user_prefer}酒店'
+        return f'使用maps_text_search工具搜索{request.end_city}的{user_prefer}酒店'
 
 
     async def build_tools(self):
@@ -35,9 +36,10 @@ class HotelAgent(BaseAgent):
                 'timeout': 20
             }
         }
-        mcp_client = MultiServerMCPClient(mcp_info)
+        mcp_client = MultiServerMCPClient(mcp_info, tool_interceptors=[limit_amap])
 
-        return await mcp_client.get_tools()
+        tools = await mcp_client.get_tools()
+        return tools
 
 
 if __name__ == '__main__':

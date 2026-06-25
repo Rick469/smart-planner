@@ -1,14 +1,21 @@
+import time
+
 from agents.base_agent import BaseAgent
 from typing import Any
 import os
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from utils.logger import log
 
 
 async def agent_run(agent: BaseAgent, req: Any):
     """多agent并发执行请求"""
+    before = time.time()
     res = ''
     async for content in agent.run(req):
         res += content
+
+    after = time.time()
+    log.info(f'{str(agent)}执行：{after-before}秒')
     return res
 
 

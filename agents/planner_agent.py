@@ -4,6 +4,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from agents.base_agent import BaseAgent
 from agents.prompts.planner_prompt import PLANNER_PROMPT
+from agents.service.mcp_service import limit_amap
 
 
 class PlannerAgent(BaseAgent):
@@ -61,9 +62,10 @@ class PlannerAgent(BaseAgent):
                 'timeout': 20
             }
         }
-        mcp_client = MultiServerMCPClient(mcp_info)
+        mcp_client = MultiServerMCPClient(mcp_info, tool_interceptors=[limit_amap])
 
-        return await mcp_client.get_tools()
+        tools = await mcp_client.get_tools()
+        return tools
 
 
 
