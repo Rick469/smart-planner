@@ -2,11 +2,11 @@ import logging
 import os
 
 # 日志目录
-LOG_DIR = "../logs"
+LOG_DIR = "./logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # 创建 logger
-log = logging.getLogger("smart-planne")
+log = logging.getLogger("smart-planner")
 log.setLevel(logging.INFO)
 
 # 避免重复添加 handler

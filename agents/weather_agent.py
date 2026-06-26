@@ -40,7 +40,7 @@ class WeatherAgent(BaseAgent):
 if __name__ == '__main__':
     async def main():
         agent = WeatherAgent(stream=True)
-        request = Request(start_city='南京', end_city='丽江', start_date='2026-07-01', end_date='2026-07-03')
+        request = Request(start_city='南京', end_city='丽江', start_date='2026-06-26', end_date='2026-06-27')
         async for content in agent.run(request):
             print(content, end='', flush=True)
 
