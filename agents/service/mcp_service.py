@@ -1,8 +1,10 @@
 import asyncio
 import json
 import hashlib
+import os
 from copy import deepcopy
 
+from langchain_mcp_adapters.client import MultiServerMCPClient
 from mcp.types import TextContent, CallToolResult
 from openai.resources.containers.files import content
 
@@ -80,3 +82,28 @@ def make_cache_key(tool_input: dict):
     )
 
     return hashlib.md5(text.encode()).hexdigest()
+
+
+amap_tools = None
+
+
+async def get_amap_tools():
+    global amap_tools
+
+    if amap_tools:
+        return amap_tools
+
+    amap_key = os.getenv('AMAP_API_KEY', None)
+    if not amap_key:
+        raise ValueError('env文件中未配置AMAP_API_KEY，请检查！')
+    mcp_info = {
+        'amap': {
+            'url': f'https://mcp.amap.com/mcp?key={amap_key}',
+            'transport': 'http',
+            'timeout': 10
+        }
+    }
+    mcp_client = MultiServerMCPClient(mcp_info, tool_interceptors=[limit_amap])
+
+    amap_tools = await mcp_client.get_tools()
+    return amap_tools

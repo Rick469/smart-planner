@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import SummarizationMiddleware
 from langchain.messages import HumanMessage, AIMessageChunk
 from langchain_openai import ChatOpenAI
 from langgraph.graph.state import CompiledStateGraph
@@ -12,7 +13,7 @@ from utils.logger import log
 
 class BaseAgent(ABC):
 
-    def __init__(self, model_name=None, api_key=None, base_url=None, stream=False):
+    def __init__(self, model_name=None, api_key=None, base_url=None, stream=False, checkpointer=None):
 
         if model_name is None:
             self.__model_name = model_name or os.getenv('LLM_MODEL_ID', 'qwen-plus')
@@ -28,6 +29,7 @@ class BaseAgent(ABC):
         self.system_prompt = None
         self.llm = None
         self.agent: CompiledStateGraph = None
+        self.checkpointer = checkpointer
 
     async def build_agent(self):
         self.system_prompt = self.get_system_prompt()
@@ -37,7 +39,14 @@ class BaseAgent(ABC):
 
         self.llm = ChatOpenAI(model=self.__model_name, api_key=self.__api_key, base_url=self.__base_url, streaming=self.stream)
 
-        self.agent = create_agent(model=self.llm, tools=self.tools, system_prompt=self.system_prompt)
+        self.agent = create_agent(model=self.llm, tools=self.tools, system_prompt=self.system_prompt,
+                                  checkpointer=self.checkpointer,
+                                  middleware=[SummarizationMiddleware(
+                                      model=self.llm,
+                                      trigger=("tokens", 5000),
+                                      keep=("messages", 5)
+                                  )])
+
 
 
     @abstractmethod
@@ -66,8 +75,17 @@ class BaseAgent(ABC):
         }
 
         token_usage = {'input': 0, 'output': 0, 'total': 0}
-        async for msg, meta in self.agent.astream(messages, stream_mode='messages'):
 
+
+        config = None
+        if self.checkpointer:
+            config = {
+                'configurable': {
+                    'thread_id': req.thread_id,
+                }
+            }
+
+        async for msg, meta in self.agent.astream(messages, stream_mode='messages', config=config):
             if isinstance(msg, AIMessageChunk):
                 if msg.content:
                     yield msg.content

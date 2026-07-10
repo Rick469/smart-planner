@@ -1,17 +1,10 @@
-import os
-
-from langchain_mcp_adapters.client import MultiServerMCPClient
-
 from agents.base_agent import BaseAgent
 from agents.prompts.weather_prompt import WEATHER_PROMPT
-from agents.service.mcp_service import limit_amap
+from agents.service.mcp_service import get_amap_tools
 from models.schema import Request
 
 
 class WeatherAgent(BaseAgent):
-
-    def __init__(self, model_name=None, api_key=None, base_url=None, stream=False):
-        super().__init__(model_name, api_key, base_url, stream)
 
     def get_system_prompt(self) -> str:
         return WEATHER_PROMPT
@@ -21,29 +14,21 @@ class WeatherAgent(BaseAgent):
 
 
     async def build_tools(self):
-        amap_key = os.getenv('AMAP_API_KEY', None)
-        if not amap_key:
-            raise ValueError('env文件中未配置AMAP_API_KEY，请检查！')
-        mcp_info = {
-            'amap': {
-                'url': f'https://mcp.amap.com/sse?key={amap_key}',
-                'transport': 'sse',
-                'timeout': 20
-            }
-        }
-        mcp_client = MultiServerMCPClient(mcp_info, tool_interceptors=[limit_amap])
 
-        tools = await mcp_client.get_tools()
-        return tools
+        return await get_amap_tools()
 
 
 if __name__ == '__main__':
     async def main():
         agent = WeatherAgent(stream=True)
-        request = Request(start_city='南京', end_city='丽江', start_date='2026-06-26', end_date='2026-06-27')
+        request = Request(start_city='南京', end_city='丽江', start_date='2026-07-04', end_date='2026-07-05', thread_id='4')
         async for content in agent.run(request):
             print(content, end='', flush=True)
 
     import asyncio
+
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsSelectorEventLoopPolicy()
+    )
     asyncio.run(main())
 
