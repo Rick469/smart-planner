@@ -4,6 +4,9 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from utils.logger import log
 import os
 from service.agent_registry import AgentRegistry
+from service.chat_service import ChatService
+from api.chat import router as chat_router
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
@@ -20,6 +23,7 @@ async def lifespan(app:FastAPI):
 
 
         app.state.agents = AgentRegistry(checkpointer)
+        app.state.chat_service = ChatService(app.state.agents)
         log.info('Agent注册完成...')
 
         yield
@@ -33,9 +37,28 @@ app = FastAPI(
 
 )
 
+app.add_middleware(
 
+    CORSMiddleware,
+
+    allow_origins=[
+        "http://localhost:5173"
+    ],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+
+    expose_headers=[
+        "Content-Type"
+    ]
+
+)
 
 app.include_router(
     chat_router,
-    prefix="/api"
+    prefix="/api/chat",
+    tags=["chat"]
 )

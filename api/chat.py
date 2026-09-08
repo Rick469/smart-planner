@@ -1,32 +1,28 @@
 from fastapi import APIRouter, Request
 
+from models.schema import IntentRequest
 from service.chat_service import ChatService
 from starlette.responses import StreamingResponse
+
+from utils.sse import sse
 
 router=APIRouter()
 
 
 
-@router.post("/chat/stream")
+@router.post("/stream")
 async def chat(
     req:Request,
-    body:dict
+    body:IntentRequest
 ):
 
-
-    agents=req.app.state.agents
-
-
-    chat_service = ChatService(agents)
+    chat_service = req.app.state.chat_service
 
     async def generator():
 
+        async for event in chat_service.stream_chat(body):
 
-        async for item in chat_service.stream_chat(
-            body["message"]
-        ):
-
-            yield item
+            yield sse(event)
 
 
 
